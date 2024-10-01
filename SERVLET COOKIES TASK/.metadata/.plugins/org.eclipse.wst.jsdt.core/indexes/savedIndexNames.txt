@@ -1,0 +1,7 @@
+INDEX VERSION 1.4+D:\SERVLET COOKIES TASK\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+2408793508.index
+2856589826.index
+564982594.index
+1870600786.index
+334685635.index
+1020760058.index
