@@ -1,0 +1,536 @@
+Test Cases for CRUD Operations:
+Test for GET, POST, DELETE, and PUT with successful, failure, and exception cases:
+
+Success: Assert successful responses (status 200, correct data returned).
+Failure: Test incorrect inputs (e.g., missing data).
+Exception: Handle database errors (e.g., record not found).
+You can write JUnit test cases for each of these scenarios.
+
+ 
+
+package com.Initializer;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+
+import org.springframework.web.WebApplicationInitializer;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import org.springframework.web.servlet.DispatcherServlet;
+
+public class App_Initializer implements WebApplicationInitializer {
+
+	@Override
+	public void onStartup(ServletContext servletContext) throws ServletException {
+		AnnotationConfigWebApplicationContext apc = new AnnotationConfigWebApplicationContext();
+		apc.register(AppConfigue.class);
+		apc.setServletContext(servletContext);
+		ServletRegistration.Dynamic reg = servletContext.addServlet("dispatcher",new DispatcherServlet(apc));
+		reg.addMapping("/");
+	}
+
+}
+
+package com.Initializer;
+
+import java.util.Properties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import com.Initializer.ModelClasses.Student;
+
+@Configuration
+@ComponentScan(basePackages = "com")
+@EnableWebMvc
+@PropertySource(value = "/WEB-INF/password.properties")
+public class AppConfigue {
+	@Bean
+	public InternalResourceViewResolver resolver() {
+		InternalResourceViewResolver resolver = new InternalResourceViewResolver();
+		resolver.setPrefix("/views/");
+		resolver.setSuffix(".jsp");
+		return resolver;
+	}
+	
+	@Bean
+	public DriverManagerDataSource ds() {
+		DriverManagerDataSource ds = new DriverManagerDataSource();
+		ds.setDriverClassName("com.mysql.jdbc.Driver");
+		ds.setUrl("jdbc:mysql://localhost:3306/SpringStudent");
+		ds.setUsername("root");
+		ds.setPassword("4dragozy");
+		return ds;
+	}
+	
+	@Bean
+	public LocalSessionFactoryBean sf() {
+		LocalSessionFactoryBean sf = new LocalSessionFactoryBean ();
+		sf.setDataSource(ds());
+		Properties prop = new Properties();
+		prop.put("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
+		prop.put("hibernate.hbm2ddl.auto", "update");
+		prop.put("hibernate.show_sql",true);
+		sf.setHibernateProperties(prop);
+		sf.setAnnotatedClasses(Student.class);
+		return sf;
+	}
+	
+	
+}
+
+package com.Initializer.Controller;
+
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import com.Initializer.ModelClasses.Student;
+import com.Initializer.Services.StudentService;
+
+
+@Controller
+public class HomeController {
+	
+	@Autowired
+	private StudentService service;
+	
+	public HomeController() {
+		System.out.println("Home Controller :: Construct");
+	}
+
+	@RequestMapping("/")
+	public String landingpage() {
+	System.out.println("Landing Page :: Called");
+	return "index";
+	}
+	
+	@RequestMapping("/logPage")
+	public String loginpage() {
+		System.out.println("Login Page :: Called");
+		return "login";
+	}
+	
+	@RequestMapping("/regPage")
+	public String registerPage() {
+		System.out.println("Register Page :: Called");
+		return "register";
+	}
+	
+	@RequestMapping("/log")
+	public String loginCheck(@RequestParam String username,@RequestParam String password, Model model) {
+		System.out.println("Verifying Login :: Called "+username+" "+password);
+		List <Student> stulist = service.loginCheck(username,password);
+		if(stulist!=null) {
+			stulist.forEach((n)->System.out.println(n));
+			model.addAttribute("data",stulist);
+			return "success";
+			}
+		else {
+			System.out.println("Entered wrong ID PASSWORD");
+			return "index";
+			}	
+	}
+	
+	@RequestMapping("/reg")
+	public String saveStudent(@ModelAttribute Student student) {
+		System.out.println(student);
+		service.saveStudent(student);
+		return "index";
+	}
+	
+	@RequestMapping("/delete")
+	public String deleteStudent(@RequestParam int rollno, Model model) {
+		List <Student> stulist = service.deleteStudent(rollno);
+		model.addAttribute("data",stulist);
+		return "success";
+	}
+	
+	@RequestMapping("/edit")
+	public String editStudent(@RequestParam int rollno, Model model) {
+		Student stu = service.editStudent(rollno);
+		model.addAttribute("stu",stu);
+		return "update";
+	}
+	
+	@RequestMapping("/update")
+	public String updateStudent(@ModelAttribute Student student) {
+		service.saveStudent(student);
+		return "index";
+	}
+	
+	@RequestMapping("/studentlog")
+	public String studentLoginPage() {
+		return "studentlogin";
+	}
+	
+	@RequestMapping("/studlog")
+	public String studentLogin(@RequestParam int rollno, @RequestParam long mobileno, Model model) {
+		Student stu = (Student)service.studentLogin(rollno,mobileno);
+		System.out.println(stu);
+		System.out.println("Student Login :: Called @ Home Controller");
+		boolean flag = stu != null;
+		if(flag) {
+			model.addAttribute("data",stu);
+			return "studentloginsuccess";
+		}
+		else
+			return "index";
+	}
+	
+}
+
+package com.Initializer.ModelClasses;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class User {
+	@Value("${user.username}")
+private String username;
+	@Value("${user.password}")
+private String password;
+
+public String getUsername() {
+	return username;
+}
+public void setUsername(String username) {
+	this.username = username;
+}
+public String getPassword() {
+	return password;
+}
+public void setPassword(String password) {
+	this.password = password;
+}
+
+}
+
+package com.Initializer.ModelClasses;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Entity
+public class Student {
+@Id
+private int rollno;
+private String name;
+private long mobileno;
+private double marks;
+private String address;
+
+public int getRollno() {
+	return rollno;
+}
+public void setRollno(int rollno) {
+	this.rollno = rollno;
+}
+public String getName() {
+	return name;
+}
+public void setName(String name) {
+	this.name = name;
+}
+public long getMobileno() {
+	return mobileno;
+}
+public void setMobileno(long mobileno) {
+	this.mobileno = mobileno;
+}
+public double getMarks() {
+	return marks;
+}
+public void setMarks(double marks) {
+	this.marks = marks;
+}
+public String getAddress() {
+	return address;
+}
+public void setAddress(String address) {
+	this.address = address;
+}
+
+@Override
+public String toString() {
+	return "Student [rollno=" + rollno + ", name=" + name + ", mobileno=" + mobileno + ", marks=" + marks + ", address="
+			+ address + "]";
+}
+
+public Student(int rollno, String name, long mobileno, double marks, String address) {
+	super();
+	this.rollno = rollno;
+	this.name = name;
+	this.mobileno = mobileno;
+	this.marks = marks;
+	this.address = address;
+}
+
+public Student() {
+	super();
+}
+
+}
+
+package com.Initializer.Services;
+
+import java.util.List;
+import com.Initializer.ModelClasses.Student;
+
+public interface StudentDao {
+	public void saveStudent(Student student);
+
+	public List<Student> getAllStudentsRecord();
+
+	public List<Student> deleteStudent(int rollno);
+
+	public Student editStudent(int rollno);
+
+	public Student getSingleStudentData(int rollno, long mobileno);
+	
+}
+
+package com.Initializer.Services;
+
+import java.util.List;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+import com.Initializer.ModelClasses.Student;
+
+
+@Repository
+public class StudentDaoIMPL implements StudentDao {
+	@Autowired
+	private SessionFactory factory;
+
+	public void saveStudent(Student student) {
+	System.out.println("Dao Active Now");	
+	System.out.println(student);
+	Session session = factory.openSession();
+	session.saveOrUpdate(student);
+	session.beginTransaction().commit();
+	System.out.println("DATA NOW SAVED TO DB");
+	}
+
+	public List<Student> getAllStudentsRecord() {
+		Session session = factory.openSession();
+		Query q1 = session.createQuery("from Student ORDER BY rollno");
+		List <Student> list1 = q1.getResultList();
+		return list1;
+	}
+
+	@Override
+	public List<Student> deleteStudent(int rollno) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		Query d1 = session.createQuery("delete from Student where rollno=:id");
+		d1.setParameter("id", rollno);
+		d1.executeUpdate();
+		tx.commit();
+		return getAllStudentsRecord();
+	}
+
+	@Override
+	public Student editStudent(int rollno) {
+		
+		return factory.openSession().get(Student.class, rollno);
+	}
+
+	@Override
+	public Student getSingleStudentData(int rollno, long mobileno) {
+		Session session = factory.openSession();
+		Transaction tx = session.beginTransaction();
+		Query q = session.createQuery("from Student where rollno=:id");
+		q.setParameter("id",rollno);
+		Student stu = (Student)q.getSingleResult();
+		if(rollno==stu.getRollno() && mobileno==stu.getMobileno()) {
+			return stu;
+		}
+		else
+		return null;
+	}
+
+}
+
+package com.Initializer.Services;
+
+import java.util.List;
+import com.Initializer.ModelClasses.Student;
+
+public interface StudentService {
+
+	public void saveStudent(Student student);
+
+	public List<Student> loginCheck(String username, String password);
+
+	public List<Student> deleteStudent(int rollno);
+
+	public Student editStudent(int rollno);
+
+	public Student studentLogin(int rollno, long mobileno);
+
+}
+
+package com.Initializer.Services;
+
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.Initializer.ModelClasses.Student;
+import com.Initializer.ModelClasses.User;
+
+
+@Service
+public class StudentServiceIMPL implements StudentService {
+	
+	@Autowired
+	private StudentDao dao;
+	@Autowired
+	private User user;
+	
+	public void saveStudent(Student student) {
+		System.out.println("Service Is Active Now");
+		System.out.println(student);
+		dao.saveStudent(student);
+	}
+
+	public List<Student> loginCheck(String username, String password) {
+		System.out.println("In student service impl class");
+		System.out.println(user.getUsername()+" "+user.getPassword());
+		
+		if(username.equals(user.getUsername()) && password.equals(user.getPassword())) {
+		return dao.getAllStudentsRecord();
+		}
+		else
+		return null;
+	}
+
+	@Override
+	public List<Student> deleteStudent(int rollno) {
+		return dao.deleteStudent(rollno);
+	}
+
+	@Override
+	public Student editStudent(int rollno) {
+		return dao.editStudent(rollno);
+	}
+
+	@Override
+	public Student studentLogin(int rollno, long mobileno) {
+		System.out.println("student login @ StudentServiceIMPL :: Called");
+		dao.getSingleStudentData(rollno,mobileno);
+		return dao.getSingleStudentData(rollno,mobileno);
+	}
+
+}
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>Spring_MVC</groupId>
+    <artifactId>Spring_MVC</artifactId>
+    <packaging>war</packaging>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>Spring_MVC Maven Webapp</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Set the version for Spring Boot -->
+        <spring.boot.version>2.5.0</spring.boot.version>
+    </properties>
+
+    <dependencies>
+        <!-- Hibernate Core -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>5.2.17.Final</version>
+        </dependency>
+
+        <!-- MySQL Connector -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.28</version>
+        </dependency>
+
+        <!-- Spring MVC -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.3.20</version>
+        </dependency>
+
+        <!-- Spring JDBC -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>5.3.20</version>
+        </dependency>
+
+        <!-- Spring ORM -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+            <version>5.3.20</version>
+        </dependency>
+
+        <!-- Spring Boot Starter Test (includes JUnit 5) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.boot.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Servlet API (provided) -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>Spring_MVC</finalName>
+    </build>
+</project>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2.4.xsd" 
+         id="WebApp_ID">
+  <display-name>Spring_MVC_JAVA_Based</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+</web-app>

@@ -1,0 +1,547 @@
+package com.Initializer;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+@SpringBootApplication
+public class DakrSolutionsApplication {
+	
+	private static final Logger logger = LogManager.getLogger(DakrSolutionsApplication.class);
+
+	public static void main(String[] args) {
+		logger.info("Main App Running");
+		SpringApplication.run(DakrSolutionsApplication.class, args);
+	}
+
+}
+***************************************************************************************************************
+package com.Initializer.Controller;
+
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import com.Initializer.Model.DAKRSolutions;
+import com.Initializer.Repository.DAKRSolutionsRepository;
+import com.Initializer.Service.DAKRSolutionsService;
+
+@Controller
+public class DAKRSolutionsController {
+	@Autowired
+	private DAKRSolutionsService service;
+	@Autowired
+	private DAKRSolutionsRepository repo;
+	
+	private static final Logger logger = LogManager.getLogger(DAKRSolutionsController.class);
+
+	@GetMapping("/")
+	public String landingPage() {
+		logger.info("Landing-Page Executed Correctly.");
+		logger.atTrace();
+		return "landingPage";
+	}
+
+	@GetMapping("/form")
+	public String showForm(Model model) {
+		logger.info("Form-URL Executed/Working Correctly.");
+		model.addAttribute("dakrSolutions", new DAKRSolutions());
+		logger.atTrace();
+		return "dakrsForm";
+	}
+
+	@PostMapping("/saveForm")
+	public String submitForm(@RequestParam("id") Long id,@RequestParam("name") String name, @RequestParam("goal") String goal,
+			@RequestParam("fiveYearRoadmap") String fiveYearRoadmap) {
+		DAKRSolutions dakrSolutions = new DAKRSolutions(id, name, goal, fiveYearRoadmap);
+		DAKRSolutions dakrSolutions2 = repo.save(dakrSolutions);
+		return "success";
+	}
+
+	@GetMapping("/all-solutions")
+	public String getAllSolutions(Model model) {
+		List<DAKRSolutions> solutions = service.getAllSolutions();
+		model.addAttribute("solutions", solutions);
+		logger.info("Fetched all solutions.");
+		return "dakrsForm";
+	}
+
+}
+***************************************************************************************************************
+package com.Initializer.Model;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class DAKRSolutions {
+
+    @Id
+    private Long id;
+
+    private String name;
+    private String goal;
+    private String fiveYearRoadmap;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getGoal() {
+        return goal;
+    }
+
+    public void setGoal(String goal) {
+        this.goal = goal;
+    }
+
+    public String getFiveYearRoadmap() {
+        return fiveYearRoadmap;
+    }
+
+    public void setFiveYearRoadmap(String fiveYearRoadmap) {
+        this.fiveYearRoadmap = fiveYearRoadmap;
+    }
+
+	@Override
+	public String toString() {
+		return "DAKRSolutions [id=" + id + ", name=" + name + ", goal=" + goal + ", fiveYearRoadmap=" + fiveYearRoadmap
+				+ "]";
+	}
+
+	public DAKRSolutions(Long id, String name, String goal, String fiveYearRoadmap) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.goal = goal;
+		this.fiveYearRoadmap = fiveYearRoadmap;
+	}
+
+	public DAKRSolutions() {
+		super();
+	}
+    
+}
+***************************************************************************************************************
+package com.Initializer.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import com.Initializer.Model.DAKRSolutions;
+
+@Repository
+public interface DAKRSolutionsRepository extends JpaRepository<DAKRSolutions, Long> {
+
+}
+***************************************************************************************************************
+package com.Initializer.Service;
+
+import java.util.List;
+import com.Initializer.Model.DAKRSolutions;
+
+public interface DAKRSolutionsService {
+
+	List<DAKRSolutions> getAllSolutions();
+}
+***************************************************************************************************************
+package com.Initializer.ServiceImplementations;
+
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.Initializer.Model.DAKRSolutions;
+import com.Initializer.Repository.DAKRSolutionsRepository;
+import com.Initializer.Service.DAKRSolutionsService;
+
+@Service
+public class DAKRSolutionsServiceImplementation implements DAKRSolutionsService {
+
+	@Autowired
+	private DAKRSolutionsRepository repository;
+
+//	@Override
+//	public String saveDakrsSolutions(DAKRSolutions dakrSolutions) {
+//		repository.save(dakrSolutions);
+//		return "Form Submitted";
+//	}
+
+	public List<DAKRSolutions> getAllSolutions() {
+		return repository.findAll();
+	}
+}
+***************************************************************************************************************
+application.properties
+
+spring.application.name=DAKR_Solutions
+server.port=9090
+#DATABASE
+spring.datasource.url=jdbc:mysql://localhost:3306/DAKR_Solutions_DB
+spring.datasource.username=root
+spring.datasource.password=4dragozy
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+#HIBERNATE
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.database-platform=org.hibernate.dialect.MySQL55Dialect
+# View Resolver Configuration
+spring.mvc.view.prefix=/WEB-INF/views/
+spring.mvc.view.suffix=.jsp
+***************************************************************************************************************
+log4j2.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+
+        <!-- File Appender -->
+        <File name="File" fileName="logs/app.log">
+            <PatternLayout>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</pattern>
+            </PatternLayout>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <!-- Root logger captures all logs at DEBUG level and above -->
+        <Root level="debug">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="File" />
+        </Root>
+    </Loggers>
+</Configuration>
+***************************************************************************************************************
+dakrsForm.jsp
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>DAKR Solutions Form</title>
+<style>
+.error {
+	color: red;
+	font-size: 12px;
+}
+
+.form-group {
+	margin-bottom: 15px;
+}
+
+label {
+	display: block;
+	font-weight: bold;
+	padding: 10px 15px;
+	font-size: 20px;
+}
+
+input {
+	width: 50%;
+	padding: 8px;
+	margin-top: 5px;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+}
+
+button {
+	background-color: #4CAF50;
+	color: white;
+	padding: 10px 15px;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	padding-right : 50px;
+}
+
+button:hover {
+	background-color: #45a049;
+}
+</style>
+</head>
+<body>
+	<h2>DAKR Solutions Form</h2>
+	<!-- Form starts here -->
+	<form:form modelAttribute="dakrSolutions"
+		action="${pageContext.request.contextPath}/saveForm" method="post">
+		
+		<div class="form-group">
+			<form:label path="id">ID</form:label>
+			<form:input path="id" />
+			<form:errors path="id" cssClass="error" />
+		</div>
+
+		<div class="form-group">
+			<form:label path="name">Name</form:label>
+			<form:input path="name" />
+			<form:errors path="name" cssClass="error" />
+		</div>
+
+		<div class="form-group">
+			<form:label path="goal">Goal</form:label>
+			<form:input path="goal" />
+			<form:errors path="goal" cssClass="error" />
+		</div>
+
+		<div class="form-group">
+			<form:label path="fiveYearRoadmap">Five-Year Roadmap</form:label>
+			<form:input path="fiveYearRoadmap" />
+			<form:errors path="fiveYearRoadmap" cssClass="error" />
+		</div>
+
+		<div class="form-group">
+			<button type="submit">Submit</button>
+		</div>
+
+	</form:form>
+</body>
+</html>
+***************************************************************************************************************
+landingPage.jsp
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>DAKR Solutions - Landing Page</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	background-color: #f4f4f4;
+	margin: 0;
+	padding: 0;
+}
+
+.header {
+	background-color: #333;
+	color: white;
+	padding: 20px;
+	text-align: center;
+}
+
+.content {
+	margin: 20px;
+	padding: 20px;
+	background-color: white;
+	border-radius: 8px;
+	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.content h1 {
+	color: #333;
+}
+
+.content p {
+	font-size: 16px;
+	line-height: 1.6;
+}
+
+.buttons {
+	margin-top: 20px;
+}
+
+.buttons a {
+	background-color: #4CAF50;
+	color: white;
+	padding: 10px 20px;
+	text-decoration: none;
+	border-radius: 5px;
+	margin-right: 10px;
+}
+
+.buttons a:hover {
+	background-color: #45a049;
+}
+</style>
+</head>
+<body>
+	<div class="header">
+		<h1>Welcome to DAKR Solutions</h1>
+	</div>
+
+	<div class="content">
+		<h1>Empower Your Future with a Five-Year Roadmap</h1>
+		<p>At DAKR Solutions, we help individuals like you to set clear
+			goals and create a well-defined roadmap for success. Whether you're a
+			student, professional, or entrepreneur, our solutions are designed to
+			help you achieve your five-year goals.</p>
+
+		<div class="buttons">
+			<a href="/form">Get Started - Fill the DAKR Solutions Form</a>
+		</div>
+	</div>
+</body>
+</html>
+***************************************************************************************************************
+success.jsp
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+	<h2>${message}</h2>
+	<a href="/form">Go Back to Form</a>
+</body>
+</html>
+***************************************************************************************************************
+POM.XML
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.7.10</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.dakrSolutions</groupId>
+	<artifactId>DAKR_Solutions</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>DAKR_Solutions</name>
+	<description>Demo project for Spring Boot</description>
+	<url />
+	<licenses>
+		<license />
+	</licenses>
+	<developers>
+		<developer />
+	</developers>
+	<scm>
+		<connection />
+		<developerConnection />
+		<tag />
+		<url />
+	</scm>
+	<properties>
+		<java.version>1.8</java.version>
+	</properties>
+	<dependencies>
+		<!-- Spring Boot Starter Web -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!-- Spring Boot Starter Data JPA -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<!-- JSTL -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+		<!-- MySQL Driver -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.33</version>
+		</dependency>
+
+		<!-- Spring Boot DevTools -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- Tomcat Embed Jasper for JSP support -->
+		<dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+		</dependency>
+
+		<!-- Provided for JSP support -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>4.0.1</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Spring Boot Starter Test (includes JUnit 5) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<!-- Exclude JUnit 4 if you only want to use JUnit 5 -->
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- Log4j API and Core Dependencies -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.17.1</version> <!-- This is compatible with Java 8 -->
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.17.1</version> <!-- This is compatible with Java 8 -->
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+***************************************************************************************************************
+
+***************************************************************************************************************
+
+***************************************************************************************************************
+
+***************************************************************************************************************
