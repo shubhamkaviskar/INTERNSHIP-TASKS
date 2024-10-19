@@ -1,3 +1,6 @@
 1st work: E-COMMERCE ANGULAR APPLICATION
 2nd work: SERVLET COOKIES TASK
-3rd work: 
+3rd work: SpringBoot_MVC_MailSenderApp
+4th work: SpringMVC_CRUD_Tests
+5th work: DAKR_Solutions
+6th work: JWT_OAuth_Project
