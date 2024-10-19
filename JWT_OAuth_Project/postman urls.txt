@@ -1,0 +1,46 @@
+1)	user signup link -POST- http://localhost:9081/api/v1/auth/signup 
+	postman raw json body: 
+	{
+	"name":"user",
+	"secondname":"user",
+	"email":"shubhamkaviskar@gmail.com",
+	"password":"user"
+	}
+2)	signin link -POST- http://localhost:9081/api/v1/auth/signin
+	postman raw json body:
+	{
+    	"email": "shubhamkaviskar@gmail.com",
+    	"password": "admin"
+	}
+	Authorization:
+	JWT Bearer
+	Algorithm: HS256
+	Secret: wHbcXtB9pl3FzY/rExW/EUgOTAlcL0jqwpgPcJGATbU=
+	
+	YOU WILL RECEIVE SUCH TOKENS IN POSTMAN  BODY:
+	{
+	"token": 	"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaHViaGFta2F2aXNrYXJAZ21haWwuY29tIiwiaWF0IjoxNzI5MzI4MTkyLCJleHAiOjE3MjkzM	jk2MzJ9.PKYkkZ34L7fNqTfuphY11Qd1vxQBBm_KhahnMdWMi5M",
+	"refreshToken": 	"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaHViaGFta2F2aXNrYXJAZ21haWwuY29tIiwiaWF0IjoxNzI5MzI4MTkyLCJleHAiOjE3Mjk5M	zI5OTJ9.GiuWznndtfhOFnu-72p6FTJANcvxQTh2HtRfYywUiJw"
+	}
+3)	refresh token link -POST- http://localhost:9081/api/v1/auth/refresh 
+	postman raw json body: TOKEN TAKEN FROM signin link and pasted in body.
+	{	"token":"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaHViaGFta2F2aXNrYXJAZ21haWwuY29tIiwiaWF0IjoxNzI5MzMwOTU5LCJleHAiOjE3Mjk5MzU3NTl9.E6hujJtvwl-_UiO6AbI-CdCKIAiFp5wGQPCtCjs7Lb4"
+	}
+
+	YOU WILL RECEIVE THIS IN BODY: 
+	{
+	"token": 	"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaHViaGFta2F2aXNrYXJAZ21haWwuY29tIiwiaWF0IjoxNzI5MzMxMDMzLCJleHAiOjE3MjkzMzI0NzN9.fHoe5GN4vgPBJL4eOo6QjAaFc69bf-bysfqC1iQEtfs",
+	"refreshToken":
+	"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzaHViaGFta2F2aXNrYXJAZ21haWwuY29tIiwiaWF0IjoxNzI5MzMwOTU5LCJleHAiOjE3Mjk5MzU3NTl9.E6hujJtvwl-_UiO6AbI-CdCKIAiFp5wGQPCtCjs7Lb4"
+	}
+4)	Admin login -GET- http://localhost:9081/api/v1/admin
+	Authorization:
+	Bearer Token: token link from refresh link
+5)	User login -GET- http://localhost:9081/api/v1/user
+	Authorization:
+	Bearer Token: token link from signin link
+	http://localhost:9081/api/v1/auth/signin
+	{
+	    "email": "user@gmail.com",
+	    "password": "user"
+	}
